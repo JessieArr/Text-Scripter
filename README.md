@@ -1,71 +1,41 @@
-# text-scripter README
+# Text Scripter
 
-This is the README for your extension "text-scripter". After writing up a brief description, we recommend including the following sections.
+This package introduces a configuration-driven way of controlling native VS Code behaviors such as Diagnostic highlighting and code hints.
 
-## Features
+Simply create a file named `config.json` in a directory named `.text-scripter` in the root of your workspace, and fill it out like so:
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+```
+{
+    "diagnostics": [
+        {
+            "text": "@error",
+            "message": "@error tags are highlighted in red.",
+            "severity": "error"
+        },
+        {
+            "text": "@warn",
+            "message": "@warn tags are highlighted in yellow."
+        },
+        {
+            "text": "@info",
+            "message": "@info tags are highlighted in blue.",
+            "severity": "info"
+        },
+        {
+            "text": "@hint",
+            "message": "@hint tags have their first character underlined in gray.",
+            "severity": "hint",
+            "fileExtensions": "txt"
+        }
+    ]
+}
+```
 
-For example if there is an image subfolder under your extension project workspace:
+The fields for a diagnostic rule are as follows:
 
-\!\[feature X\]\(images/feature-x.png\)
+- `text`: The text to be highlighted.
+- `message`: The text displayed on hover and in the Problems pane for this diagnostic.
+- `severity`: (optional) One of `error`, `warn`, `info`, `hint`. Controls how VS Code higlights the text. Defaults to `warn`.
+- `fileExtensions`: (optional) CSV of file extensions the rule will apply for. Provide this to improve performance.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+You may replace these diagnostic rules with your own - they should load and begin running on files in your workspace immediately, as soon as you change or save the file.

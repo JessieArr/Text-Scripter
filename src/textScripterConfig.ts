@@ -1,6 +1,6 @@
-
+import { DiagnosticRule } from './DiagnosticRule';
 
 export class TextScripterConfig
 {
-    public warningHighlights : Array<string> = [];
+    public diagnostics : Array<DiagnosticRule> = [];
 }

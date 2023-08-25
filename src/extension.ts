@@ -12,48 +12,62 @@ export async function activate(context: vscode.ExtensionContext) {
 	console.log('text-scripter is starting up!');
 
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection('text-scripter');
-	const config = await loadConfig();
+	var config = await loadConfig();
 
 	const openHandler = async (doc: vscode.TextDocument) => {
 		if(!doc.uri)
 		{
 			return;
 		}
+		if(!config)
+		{
+			// Config isn't loaded yet.
+			return;
+		}
 		const diagnostics = await getDiagnostics(doc, config);
 		diagnosticCollection.set(doc.uri, diagnostics);
 	};
 
-	const changeHandler = async (doc: vscode.TextDocument) => {
-		if(!doc.uri)
+	const changeHandler = async (doc: vscode.TextDocumentChangeEvent) => {
+		if(!doc.document.uri)
 		{
 			return;
 		}
-		if(doc.uri === configFilePath)
+		if(!config)
 		{
+			// Config isn't loaded yet.
+			return;
+		}
+		const folder = vscode.workspace.getWorkspaceFolder(doc.document.uri);
+		if(!folder)
+		{
+			return;
+		}
+		const configFile = vscode.Uri.joinPath(folder.uri, configFilePath);
+		if(doc.document.uri.path === configFile.path)
+		{
+			console.log("Config file changed!");
 			config = await loadConfig();
 		}
 		else{
-			const diagnostics = await getDiagnostics(doc, config);
-			diagnosticCollection.set(doc.uri, diagnostics);	
+			const diagnostics = await getDiagnostics(doc.document, config);
+			diagnosticCollection.set(doc.document.uri, diagnostics);	
 		}
 	};
 
 	const didOpen = vscode.workspace.onDidOpenTextDocument(doc => openHandler(doc));
+	const didSave = vscode.workspace.onDidSaveTextDocument(doc => openHandler(doc));
 	const didChange = vscode.workspace.onDidChangeTextDocument(doc => changeHandler(doc));
 
 	if (vscode.window.activeTextEditor) {
 		await openHandler(vscode.window.activeTextEditor.document);
 	}
 
-	context.subscriptions = new Array<vscode.Disposable>(diagnosticCollection, didOpen, didChange);
+	context.subscriptions.push(diagnosticCollection, didOpen, didChange, didSave);
 }
 
-async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConfig) : Array<vscode.Diagnostic>
+async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConfig) : Promise<vscode.Diagnostic[]>
 {
-	if(!doc.getText)
-	{
-		return;
-	}
 	const text = doc.getText();
 	const diagnostics = new Array<vscode.Diagnostic>();
 
@@ -61,14 +75,27 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 
 	var line = 0;
 	lines.forEach(lineText => {
-		config.warningHighlights.forEach(highlight => {
-			if(lineText === highlight)
+		config.diagnostics.forEach(diagnosticRule => {
+			if(diagnosticRule.fileExtensions)
 			{
-				const range = new vscode.Range(line, 0, line, lineText.length);
+				// bail early if this rule doesn't match the file
+				const fileExtensions = diagnosticRule.fileExtensions.split(',');
+				const fileExtensionMatch = fileExtensions.find(ext => doc.fileName.endsWith(ext));
+				if(!fileExtensionMatch)
+				{
+					return;
+				}
+			}
+			const lineTextMatch = lineText.indexOf(diagnosticRule.text);
+			if(lineTextMatch > -1)
+			{
+				const range = new vscode.Range(
+					line, lineTextMatch,
+					line, lineTextMatch + diagnosticRule.text.length);
 				const diagnostic = new vscode.Diagnostic(
 					range,
-					highlight + " is configured as a warning!",
-					vscode.DiagnosticSeverity.Warning);
+					diagnosticRule.message,
+					getSeverity(diagnosticRule.severity));
 				diagnostics.push(diagnostic);
 			}
 		});
@@ -78,7 +105,7 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 	return diagnostics;
 }
 
-async function loadConfig() : TextScripterConfig | null
+async function loadConfig() : Promise<TextScripterConfig | null>
 {
 	const configFiles = await vscode.workspace.findFiles(configFilePath, '**/node_modules/**', 1);
 	if(configFiles.length === 0)
@@ -89,6 +116,23 @@ async function loadConfig() : TextScripterConfig | null
 	const configFileContents = readFileSync(configFiles[0].fsPath, 'utf8');
 	const config = JSON.parse(configFileContents) as TextScripterConfig;
 	return config;
+}
+
+function getSeverity(severity: string) : vscode.DiagnosticSeverity
+{
+	switch(severity)
+	{
+		case "error":
+			return vscode.DiagnosticSeverity.Error;
+		case "warn":
+			return vscode.DiagnosticSeverity.Warning;
+		case "info":
+			return vscode.DiagnosticSeverity.Information;
+		case "hint":
+			return vscode.DiagnosticSeverity.Hint;
+		default:
+			return vscode.DiagnosticSeverity.Warning;
+	}
 }
 
 // This method is called when your extension is deactivated

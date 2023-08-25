@@ -2,7 +2,10 @@
   "name": "text-scripter",
   "displayName": "Text Scripter",
   "description": "A configurable tool that allows you to perform custom operations on text in VS Code.",
-  "version": "0.0.1",
+  "repository": "https://github.com/JessieArr/Text-Scripter",
+  "author": "JessieArr",
+  "publisher": "jessie-arr",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.81.0"
   },
