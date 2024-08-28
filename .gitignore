@@ -2,3 +2,5 @@
 /out/*
 /test/*.js
 /test/*.js.map
+
+.vscode-test/
