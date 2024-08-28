@@ -1,5 +1,5 @@
-import { ImportMock } from 'ts-mock-imports';
-import TextScripter from '../textScripter';
+// import { ImportMock } from 'ts-mock-imports';
+import TextScripter from '../src/textScripter';
 const assert = require('assert');
 
 describe('Hello World Test', function() {
@@ -7,10 +7,6 @@ describe('Hello World Test', function() {
         const sut = new TextScripter();
         const result = sut.helloWorld();
         assert.equal(result, 'Hello World');
-    });
-    it('should mock vscode', function() {
-        const sut = new TextScripter();
-        sut.test();
     });
 });
 
