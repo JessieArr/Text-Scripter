@@ -171,7 +171,32 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 }
 
 async function loadConfig() : Promise<TextScripterConfig | null>
-{	const configFilePath = extensionRootDirectory + '/' + configFileName;
+{	
+	const configFilePath = extensionRootDirectory + '/' + configFileName;
+	const config = await loadAndParseConfigFile(configFilePath);
+	if(config === null) {
+		// Fall back to local config if we can find it
+		const fallbackPath = extensionRootDirectory + '/local/' + configFileName;
+		const localConfig = await loadAndParseConfigFile(fallbackPath);
+		return localConfig;
+	}
+	if(config.localFolder) {
+		const localConfigPath = extensionRootDirectory
+			+ '/' + config.localFolder 
+			+ '/' + configFileName;
+		const localConfig = await loadAndParseConfigFile(localConfigPath);
+		if(localConfig && localConfig.diagnostics) {
+			localConfig.diagnostics.forEach(diagnostic => {
+				config.diagnostics.push(diagnostic);
+			});
+		}
+	}
+	
+	return config;
+}
+
+async function loadAndParseConfigFile(configFilePath: string) : Promise<TextScripterConfig | null>
+{
 	const configFiles = await vscode.workspace.findFiles(
 		configFilePath,
 		'**/node_modules/**',
@@ -184,29 +209,6 @@ async function loadConfig() : Promise<TextScripterConfig | null>
 	}
 	const configFileContents = readFileSync(configFiles[0].fsPath, 'utf8');
 	const config = JSON.parse(configFileContents) as TextScripterConfig;
-	if(config.localFolder) {
-		const localConfigPath = extensionRootDirectory
-		+ '/' + config.localFolder 
-		+ '/' + configFileName;
-		const localConfigFiles = await vscode.workspace.findFiles(
-			localConfigPath,
-			'**/node_modules/**',
-			1
-		);
-		if(localConfigFiles.length === 0)
-		{
-			console.log("Failed to load text-scripter local config from: " + localConfigPath);
-			return config;
-		}
-		const localConfigFileContents = readFileSync(localConfigFiles[0].fsPath, 'utf8');
-		const localConfig = JSON.parse(localConfigFileContents) as TextScripterConfig;
-		if(localConfig.diagnostics) {
-			localConfig.diagnostics.forEach(diagnostic => {
-				config.diagnostics.push(diagnostic);
-			});
-		}
-	}
-	
 	return config;
 }
 
