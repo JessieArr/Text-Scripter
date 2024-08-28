@@ -141,6 +141,10 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 	var line = 0;
 	lines.forEach(lineText => {
 		config.diagnostics.forEach(diagnosticRule => {
+			if(diagnosticRule.regex) {
+				// We'll run these later.
+				return;
+			}
 			if(diagnosticRule.fileExtensions)
 			{
 				// bail early if this rule doesn't match the file
@@ -166,6 +170,25 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 		});
 		line++;
 	});
+	config.diagnostics.forEach(diagnosticRule => {
+		if(diagnosticRule.regex) {
+			const regex = new RegExp(diagnosticRule.regex, 'g');
+			const matches = text.matchAll(regex);
+			for(const match of matches)
+			{
+				if(match.index !== undefined) {
+					const range = new vscode.Range(
+						doc.positionAt(match.index),
+						doc.positionAt(match.index + match[0].length));
+					const diagnostic = new vscode.Diagnostic(
+						range,
+						diagnosticRule.message,
+						getSeverity(diagnosticRule.severity));
+					diagnostics.push(diagnostic);
+				}
+			}
+		}
+	});
 
 	return diagnostics;
 }
@@ -178,6 +201,9 @@ async function loadConfig() : Promise<TextScripterConfig | null>
 		// Fall back to local config if we can find it
 		const fallbackPath = extensionRootDirectory + '/local/' + configFileName;
 		const localConfig = await loadAndParseConfigFile(fallbackPath);
+		if(localConfig) {
+			localConfig.localFolder = 'local';
+		}
 		return localConfig;
 	}
 	if(config.localFolder) {

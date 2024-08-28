@@ -5,7 +5,7 @@
   "repository": "https://github.com/JessieArr/Text-Scripter",
   "author": "JessieArr",
   "publisher": "jessie-arr",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.81.0"
   },

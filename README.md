@@ -34,12 +34,13 @@ Simply create a file named `config.json` in a directory named `.text-scripter` i
 
 `localFolder` allows you to load a second config from a second path nested inside of
 the .text-scripter folder. This allows developers to have a second set of personal
-diagnostic rules which don't need to be included in source control.
+diagnostic rules which don't need to be included in source control. Defaults to `local`.
 
 ### Diagnostics
 The fields for a diagnostic rule are as follows:
 
 - `text`: The text to be highlighted.
+- `regex`: The JS-flavored regex pattern to be searched for, e.g. `exa+mple` would match `exaaaample`.
 - `message`: The text displayed on hover and in the Problems pane for this diagnostic.
 - `severity`: (optional) One of `error`, `warn`, `info`, `hint`. Controls how VS Code higlights the text. Defaults to `warn`.
 - `fileExtensions`: (optional) CSV of file extensions the rule will apply for. Provide this to improve performance.
