@@ -1,10 +1,12 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { TextScripterConfig } from './textScripterConfig';
+import { provideCodeActions } from './codeActionProvider';
 
-const configFilePath = ".text-scripter/config.json";
+const extensionRootDirectory = ".text-scripter";
+const configFileName = "config.json";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -43,10 +45,18 @@ export async function activate(context: vscode.ExtensionContext) {
 		{
 			return;
 		}
+		const configFilePath = extensionRootDirectory + '/' + configFileName;
 		const configFile = vscode.Uri.joinPath(folder.uri, configFilePath);
+		const localConfigPath = extensionRootDirectory
+			+ '/' + config.localFolder 
+			+ '/' + configFileName;
+		const localConfigFile = vscode.Uri.joinPath(folder.uri, localConfigPath);
 		if(doc.document.uri.path === configFile.path)
 		{
 			console.log("Config file changed!");
+			config = await loadConfig();
+		} else if(doc.document.uri.path === localConfigFile.path) {
+			console.log("Local config file changed!");
 			config = await loadConfig();
 		}
 		else{
@@ -63,7 +73,62 @@ export async function activate(context: vscode.ExtensionContext) {
 		await openHandler(vscode.window.activeTextEditor.document);
 	}
 
-	context.subscriptions.push(diagnosticCollection, didOpen, didChange, didSave);
+	// const helloWorldCommand = vscode.commands.registerCommand('text-scripter.helloWorld', () => {
+	// 	const editor = vscode.window.activeTextEditor;
+	// 	const selection = editor.selection;
+	// 	if (selection && !selection.isEmpty) {
+	// 		console.log(editor.document.uri);
+	// 	    const selectionRange = new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character);
+	// 	    const highlighted = editor.document.getText(selectionRange);
+	// 		editor.edit(editBuilder => {
+	// 			const document = editor.document;
+    //             editor.selections.forEach(sel => {
+    //                 const range = sel.isEmpty ? document.getWordRangeAtPosition(sel.start) || sel : sel;
+    //                 let word = document.getText(range);
+    //                 let reversed = word.split('').reverse().join('');
+    //                 editBuilder.replace(range, reversed);
+    //             });
+	// 			vscode.window.showInformationMessage("Done!");
+    //         });
+	// 	}
+    // });
+
+	// const codeActionProvider = vscode.languages.registerCodeActionsProvider(
+    //     { language: 'json' },
+    //     {
+    //         provideCodeActions
+    //     }
+    // );
+
+	/**
+	 * TO resume testing of right click context menu items,
+	 * Add this to the "contributes" section of package.json,
+	 * and uncomment the line below where we don't load the command.
+    "menus": {
+      "editor/context": [
+        {
+          "command": "text-scripter.helloWorld",
+          "group": "text-scripter",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "text-scripter.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+	 */
+
+	context.subscriptions.push(
+		//codeActionProvider,
+		//helloWorldCommand,
+		diagnosticCollection,
+		didOpen,
+		didChange,
+		didSave
+	);
 }
 
 async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConfig) : Promise<vscode.Diagnostic[]>
@@ -106,15 +171,42 @@ async function getDiagnostics(doc: vscode.TextDocument, config: TextScripterConf
 }
 
 async function loadConfig() : Promise<TextScripterConfig | null>
-{
-	const configFiles = await vscode.workspace.findFiles(configFilePath, '**/node_modules/**', 1);
+{	const configFilePath = extensionRootDirectory + '/' + configFileName;
+	const configFiles = await vscode.workspace.findFiles(
+		configFilePath,
+		'**/node_modules/**',
+		1
+	);
 	if(configFiles.length === 0)
 	{
+		console.log("Failed to load text-scripter config from: " + configFilePath);
 		return null;
 	}
-	//const openPath = vscode.Uri.file(configFiles[0].fsPath);
 	const configFileContents = readFileSync(configFiles[0].fsPath, 'utf8');
 	const config = JSON.parse(configFileContents) as TextScripterConfig;
+	if(config.localFolder) {
+		const localConfigPath = extensionRootDirectory
+		+ '/' + config.localFolder 
+		+ '/' + configFileName;
+		const localConfigFiles = await vscode.workspace.findFiles(
+			localConfigPath,
+			'**/node_modules/**',
+			1
+		);
+		if(localConfigFiles.length === 0)
+		{
+			console.log("Failed to load text-scripter local config from: " + localConfigPath);
+			return config;
+		}
+		const localConfigFileContents = readFileSync(localConfigFiles[0].fsPath, 'utf8');
+		const localConfig = JSON.parse(localConfigFileContents) as TextScripterConfig;
+		if(localConfig.diagnostics) {
+			localConfig.diagnostics.forEach(diagnostic => {
+				config.diagnostics.push(diagnostic);
+			});
+		}
+	}
+	
 	return config;
 }
 

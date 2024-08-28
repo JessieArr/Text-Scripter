@@ -5,7 +5,7 @@
   "repository": "https://github.com/JessieArr/Text-Scripter",
   "author": "JessieArr",
   "publisher": "jessie-arr",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.81.0"
   },
@@ -25,13 +25,7 @@
           "default": true
         }
       }
-    },
-    "commands": [
-      {
-        "command": "text-scripter.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -1,0 +1,24 @@
+{
+    "diagnostics": [
+        {
+            "text": "@error",
+            "message": "@error tags are highlighted in red.",
+            "severity": "error"
+        },
+        {
+            "text": "@warn",
+            "message": "@warn tags are highlighted in yellow."
+        },
+        {
+            "text": "@info",
+            "message": "@info tags are highlighted in blue.",
+            "severity": "info"
+        },
+        {
+            "text": "@hint",
+            "message": "@hint tags have their first character underlined in gray.",
+            "severity": "hint",
+            "fileExtensions": "txt"
+        }
+    ]
+}

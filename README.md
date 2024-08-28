@@ -6,6 +6,7 @@ Simply create a file named `config.json` in a directory named `.text-scripter` i
 
 ```
 {
+    "localFolder": "local",
     "diagnostics": [
         {
             "text": "@error",
@@ -31,6 +32,11 @@ Simply create a file named `config.json` in a directory named `.text-scripter` i
 }
 ```
 
+`localFolder` allows you to load a second config from a second path nested inside of
+the .text-scripter folder. This allows developers to have a second set of personal
+diagnostic rules which don't need to be included in source control.
+
+### Diagnostics
 The fields for a diagnostic rule are as follows:
 
 - `text`: The text to be highlighted.
